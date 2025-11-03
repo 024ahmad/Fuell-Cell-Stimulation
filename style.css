@@ -1,0 +1,89 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.container {
+  width: 880px;
+  text-align: center;
+  background: rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 28px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+}
+
+h1 {
+  color: white;
+  margin-bottom: 18px;
+  font-size: 32px;
+  text-shadow: 2px 2px 6px rgba(0,0,0,0.45);
+}
+
+canvas {
+  border: 2px solid #34495e;
+  border-radius: 10px;
+  background: #1a1a2e;
+  display: block;
+  margin: 0 auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Controls under the canvas */
+.controls {
+  margin-top: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+}
+
+/* Speed control */
+.speed-control {
+  color: white;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.03);
+  padding: 8px 12px;
+  border-radius: 10px;
+  backdrop-filter: blur(4px);
+}
+
+input[type="range"] { width: 220px; }
+
+/* Glassy play/pause button - Option D style */
+button.glassy {
+  border: none;
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 15px;
+  color: white;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  box-shadow: 0 6px 18px rgba(20,30,60,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+  backdrop-filter: blur(6px);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button.glassy:active { transform: translateY(1px) scale(0.997); }
+button.glassy:hover {
+  box-shadow: 0 10px 26px rgba(20,30,60,0.55), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* small speed-value text */
+#speedValue { color: #dfe9ff; font-weight: bold; }
+
+/* responsive */
+@media (max-width: 920px) {
+  .container { width: 95%; padding: 20px; }
+  input[type="range"] { width: 160px; }
+}
