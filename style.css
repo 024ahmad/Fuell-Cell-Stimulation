@@ -82,8 +82,54 @@ button.glassy:hover {
 /* small speed-value text */
 #speedValue { color: #dfe9ff; font-weight: bold; }
 
+/* NEW: Info Section Styling */
+.info-section {
+  margin-top: 30px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 25px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.info-section h2 {
+  color: white;
+  font-size: 26px;
+  margin-bottom: 20px;
+  text-align: center;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+
+.info-content {
+  color: #f0f0f0;
+  line-height: 1.6;
+}
+
+.info-content p {
+  margin-bottom: 15px;
+  font-size: 15px;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.info-content p:last-child {
+  margin-bottom: 0;
+}
+
 /* responsive */
 @media (max-width: 920px) {
   .container { width: 95%; padding: 20px; }
   input[type="range"] { width: 160px; }
+  
+  .info-section {
+    padding: 20px;
+  }
+  
+  .info-section h2 {
+    font-size: 22px;
+  }
+  
+  .info-content p {
+    font-size: 14px;
+  }
 }

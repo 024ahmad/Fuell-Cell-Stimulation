@@ -1,4 +1,4 @@
-// UPDATED script.js - with pairQueue, strict hold logic, oxygen targeting, stable H2O behavior
+// UPDATED script.js - with proper hydrogen pair control and movement
 
 // Safe DOM & canvas setup
 const canvas = document.getElementById('fuelCellCanvas');
@@ -56,11 +56,11 @@ const particles = { minus: [], plus: [] };
 // Hydrogen system (H and H+)
 const hydrogen = [];
 const hydrogenSettings = {
-  gapMs: 1500,       // 1.5 second between pairs
-  pairGapY: 18,      // vertical gap within pair
+  gapMs: 3000,       // 3 second between pairs - SLOWED DOWN
+  pairGapY: 25,      // vertical gap within pair - INCREASED
   radius: 12,
   baseSpeed: 1.2,
-  pairHorizontalMultiplier: 4
+  pairHorizontalMultiplier: 1.5  // REDUCED for slower movement
 };
 let lastPairTime = 0;
 let nextPairId = 1;
@@ -71,9 +71,8 @@ let allowedPairId = null;  // only this pair can proceed to holdLine and then to
 
 // Oxygen / Reaction / H2O
 let oxygen = null; // single oxygen object at a time
-const oxygenBaseSpeed = 1.0;
+const oxygenBaseSpeed = 0.7; // SLOWED DOWN
 let reactionInProgress = false;
-const reactionHoldBuffer = 80; // keep hydrogens held before border while reaction (px)
 
 // H2O list
 const h2oList = []; // H2O bubbles that move right and disappear when touching right electrode
@@ -81,25 +80,23 @@ const h2oList = []; // H2O bubbles that move right and disappear when touching r
 // helpers
 const now = () => performance.now();
 
-// holdLine - x coordinate where non-allowed pairs must stop before approaching border
-const holdLineX = electrolyteBorders.right.x - reactionHoldBuffer - hydrogenSettings.radius;
-
 // create entities
 function createEntities() {
   // decorative
   if (Math.random() < 0.02) particles.minus.push({ x: columns.electrolyte.x, y: columns.electrolyte.y + columns.electrolyte.height, progress: 0, speed: 0.001 + Math.random() * 0.01 });
   if (Math.random() < 0.02) particles.plus.push({ x: columns.electrolyte.x + columns.electrolyte.width, y: columns.electrolyte.y, progress: 0, speed: 0.001 + Math.random() * 0.01 });
 
-  // spawn hydrogen pair (push to queue)
+  // spawn hydrogen pair ONLY if no pairs in queue or allowed pair is done
   const t = now();
-  if (t - lastPairTime >= hydrogenSettings.gapMs) {
+  if (t - lastPairTime >= hydrogenSettings.gapMs && pairQueue.length === 0) {
     lastPairTime = t;
     const startX = columns.leftElectrode.x + 6;
     const baseY = columns.leftElectrode.y + columns.leftElectrode.height / 2;
     const pairId = nextPairId++;
-    // push into pairQueue
+    
+    // push into pairQueue and set as allowed
     pairQueue.push(pairId);
-    if (allowedPairId === null) allowedPairId = pairQueue[0];
+    allowedPairId = pairId;
 
     // create upper and lower
     hydrogen.push({ x: startX, y: baseY - hydrogenSettings.pairGapY, vx: hydrogenSettings.baseSpeed, ionized: false, stopped: false, label: 'H', pairId });
@@ -144,117 +141,93 @@ function updateEntities() {
   // hydrogen update
   for (let i = hydrogen.length - 1; i >= 0; i--) {
     const p = hydrogen[i];
-    // If this pair is not allowed to approach stop area, hold it at holdLineX
-    if (p.pairId !== allowedPairId) {
-      // allow movement until they reach holdLineX
-      if ((p.x + hydrogenSettings.radius) < holdLineX) {
-        // normal movement scaled so pairs remain spaced
-        p.x += p.vx * globalSpeed * hydrogenSettings.pairHorizontalMultiplier * 0.25;
-      } else {
-        // hold here - micro wobble only (Option A)
-        p.x = Math.min(p.x, holdLineX - hydrogenSettings.radius);
-        p.y += Math.sin(now() / 150 + p.pairId) * 0.3; // tiny wobble
-      }
-    } else {
-      // This is the allowed pair - let it proceed normally towards ionization and stop region
+    
+    // Only allowed pair can move
+    if (p.pairId === allowedPairId) {
       if (!p.ionized) {
-        p.x += p.vx * globalSpeed * hydrogenSettings.pairHorizontalMultiplier * 0.25;
+        // Normal movement towards ionization point
+        p.x += p.vx * globalSpeed * hydrogenSettings.pairHorizontalMultiplier;
+        
+        // Ionization when reaching left electrolyte border
+        if ((p.x + hydrogenSettings.radius) >= ionizeX) {
+          p.ionized = true;
+          p.label = 'H+';
+          p.vx = hydrogenSettings.baseSpeed * 1.2; // Speed up after ionization
+        }
       } else {
-        // ionized -> approach stop with micro slowing/ wobble
-        const distToStop = (stopX - hydrogenSettings.radius) - p.x;
-        if (distToStop > 120) {
-          p.x += p.vx * globalSpeed * 0.6;
-        } else if (distToStop > 20) {
-          // slow down progressively and micro wobble
-          const slowFactor = Math.max(0.06, distToStop / 140);
-          p.x += p.vx * globalSpeed * 0.12 * slowFactor;
-          p.y += Math.sin(now() / 140 + p.pairId) * 0.6 * (1 - slowFactor) * 0.02;
-        } else {
-          // near stop - if reaction not in progress we can set stopped, else hold slightly earlier
-          if (!reactionInProgress) {
-            p.stopped = true;
-            p.vx = 0;
-            p.x = stopX - hydrogenSettings.radius;
-          } else {
-            // hold before stop if reactionInProgress (should rarely happen here because allowed pair is targeted)
-            p.x = Math.min(p.x, stopX - reactionHoldBuffer - hydrogenSettings.radius);
-            p.y += Math.sin(now() / 120 + p.pairId) * 0.3;
-          }
+        // Ionized - move towards right border
+        p.x += p.vx * globalSpeed;
+        
+        // Stop at right electrolyte border (where + particles are moving)
+        if (p.x >= stopX - hydrogenSettings.radius) {
+          p.x = stopX - hydrogenSettings.radius;
+          p.stopped = true;
+          p.vx = 0;
         }
       }
     }
 
-    // Ionization
-    if (!p.ionized && (p.x + hydrogenSettings.radius) >= ionizeX) {
-      p.ionized = true;
-      p.label = 'H+';
-      p.vx = hydrogenSettings.baseSpeed * 0.9;
-    }
-
-    // cleanup if far right (shouldn't)
+    // cleanup if far right (shouldn't happen)
     if (p.x > canvas.width + 80) hydrogen.splice(i, 1);
   }
 
   // Oxygen update & collision with target allowed pair
   if (oxygen && oxygen.active) {
     oxygen.x += oxygen.vx * globalSpeed;
-    // prevent oxygen entering electrolyte too deeply - clamp
-    const minX = columns.electrolyte.x + 12;
-    if (oxygen.x < minX) oxygen.x = minX;
+    
+    // STOP OXYGEN AT ELECTROLYTE RIGHT BORDER
+    const minX = electrolyteBorders.right.x + 10;
+    if (oxygen.x < minX) {
+      oxygen.x = minX;
+      oxygen.vx = 0;
+    }
 
-    // find members of the target pair (ionized or stopped)
-    const members = hydrogen.filter(h => h.pairId === oxygen.targetPairId && h.ionized);
-    // Also allow if they were stopped and thus not present in hydrogen array (but they should be present)
+    // find members of the target pair (ionized and stopped at right border)
+    const members = hydrogen.filter(h => h.pairId === oxygen.targetPairId && h.ionized && h.stopped);
+    
     if (members.length >= 2) {
       const avgX = (members[0].x + members[1].x) / 2;
       const avgY = (members[0].y + members[1].y) / 2;
       const dx = Math.abs(oxygen.x - avgX);
       const dy = Math.abs(oxygen.y - avgY);
-      if (dx < 34 && dy < 34) {
+      
+      if (dx < 40 && dy < 40) {
         // Reaction: remove all hydrogens of this pair
         for (let i = hydrogen.length - 1; i >= 0; i--) {
           if (hydrogen[i].pairId === oxygen.targetPairId) hydrogen.splice(i, 1);
         }
-        // create H2O at collision point, must travel right and hit cathode right border before disappearing
-        const h2o = { x: avgX, y: avgY, vx: Math.abs(oxygen.vx) * 1.6, alpha: 1, fadeStart: null };
+        
+        // create H2O at collision point
+        const h2o = { x: avgX, y: avgY, vx: 2.0, alpha: 1, fadeStart: null };
         h2oList.push(h2o);
 
         // remove oxygen and set reaction lock
         oxygen = null;
         reactionInProgress = true;
-      }
-    } else {
-      // If members not present (maybe already removed), abort oxygen
-      // but keep reactionInProgress false
-      // small safety: if oxygen passes a certain point without reaction, remove it
-      if (oxygen.x < columns.electrolyte.x + 24) {
-        oxygen = null;
+        
+        // Clear the queue to allow next pair
+        pairQueue.length = 0;
+        allowedPairId = null;
       }
     }
   }
 
-  // H2O update - move right until touching cathode right border, then fade then remove and unlock next pair
+  // H2O update - move right until touching cathode right border, then fade then remove
   for (let i = h2oList.length - 1; i >= 0; i--) {
     const w = h2oList[i];
     w.x += w.vx * globalSpeed;
     const returnX = columns.rightElectrode.x + columns.rightElectrode.width - 6;
+    
     if (w.x >= returnX) {
       if (!w.fadeStart) w.fadeStart = now();
       const elapsed = now() - w.fadeStart;
-      w.alpha = Math.max(0, 1 - elapsed / 400); // fade over 400ms after touch
+      w.alpha = Math.max(0, 1 - elapsed / 400);
+      
       if (w.alpha <= 0.02) {
         h2oList.splice(i, 1);
-        // unlock next pair: shift queue and set allowedPairId to next
-        if (pairQueue.length && pairQueue[0] === allowedPairId) pairQueue.shift();
-        allowedPairId = pairQueue.length ? pairQueue[0] : null;
         reactionInProgress = false;
       }
     }
-  }
-
-  // cleanup: if no oxygen and no h2o, ensure reaction unlocked
-  if (!oxygen && h2oList.length === 0 && !reactionInProgress) {
-    if (!allowedPairId && pairQueue.length) allowedPairId = pairQueue[0];
   }
 }
 
@@ -323,7 +296,7 @@ function drawEntities() {
   drawBordersAndLabels();
 }
 
-// LED/wires and borders functions (same as before)
+// LED/wires and borders functions
 const led = { x: fuelCell.x + fuelCell.width/2, y: 60, width: 40, height: 20, isOn: true };
 const wires = {
   left: { startX: columns.electrolyte.x, startY: fuelCell.y, endX: led.x - led.width/2, endY: led.y + led.height/2, color: '#f1c40f', width: 3 },
