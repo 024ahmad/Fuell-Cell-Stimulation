@@ -77,7 +77,7 @@
 
     /* Controls under the canvas */
     .controls {
-      margin-top: min(3vw, 20px);
+      margin-top: min(2vw, 15px);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -134,7 +134,7 @@
 
     /* NEW: Info Section Styling */
     .info-section {
-      margin-top: min(5vw, 40px);
+      margin-top: min(4vw, 30px);
       text-align: center;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 12px;
@@ -182,38 +182,45 @@
       }
       
       .container {
-        padding: 20px 15px;
+        padding: 15px 12px;
         border-radius: 12px;
       }
       
       .controls {
         flex-direction: column;
-        gap: 15px;
+        gap: 12px;
+        margin-top: 12px;
       }
       
       .speed-control {
         width: 100%;
         justify-content: center;
+        padding: 8px 12px;
       }
       
       input[type="range"] {
-        width: min(60vw, 250px);
+        width: min(60vw, 200px);
       }
       
       .info-section {
-        padding: 20px 15px;
-        margin-top: 25px;
+        padding: 15px 12px;
+        margin-top: 20px;
       }
       
       h1 {
         letter-spacing: -0.3px;
+        margin-bottom: 20px;
+      }
+      
+      .canvas-container {
+        min-height: 300px;
       }
     }
 
     /* Small mobile devices */
     @media (max-width: 480px) {
       .container {
-        padding: 15px 10px;
+        padding: 12px 8px;
       }
       
       h1 {
@@ -223,19 +230,28 @@
       }
       
       .info-section {
-        padding: 15px 12px;
-        margin-top: 20px;
+        padding: 12px 10px;
+        margin-top: 15px;
       }
       
       .info-section h2 {
         font-size: 20px;
-        margin-bottom: 15px;
+        margin-bottom: 12px;
       }
       
       .info-content p {
         font-size: 14px;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
         line-height: 1.6;
+      }
+      
+      .controls {
+        margin-top: 10px;
+        gap: 10px;
+      }
+      
+      .canvas-container {
+        min-height: 250px;
       }
     }
 
@@ -333,6 +349,15 @@
       
       .canvas-container {
         max-width: 90vw;
+      }
+      
+      .controls {
+        margin-top: 8px;
+      }
+      
+      .info-section {
+        margin-top: 15px;
+        padding: 12px;
       }
     }
   </style>
@@ -615,7 +640,7 @@
       }
 
       const ionizeX = electrolyteBorders.left.x + electrolyteBorders.left.width;
-      const stopX = electrolyteBorders.right.x - 6;
+      const stopX = electrolyteBorders.right.x - hydrogenSettings.radius; // Fixed: Proper stopping position
 
       // hydrogen update
       for (let i = hydrogen.length - 1; i >= 0; i--) {
@@ -633,8 +658,9 @@
           } else {
             p.x += p.vx * globalSpeed;
             
-            if (p.x >= stopX - hydrogenSettings.radius) {
-              p.x = stopX - hydrogenSettings.radius;
+            // Fixed: Proper stopping condition for H+ ions
+            if (p.x >= stopX) {
+              p.x = stopX;
               p.stopped = true;
               p.vx = 0;
             }
@@ -648,8 +674,9 @@
       if (oxygen && oxygen.active) {
         oxygen.x += oxygen.vx * globalSpeed;
         
-        const minX = electrolyteBorders.right.x + 10;
-        if (oxygen.x < minX) {
+        // Fixed: Oxygen should stop at the right electrolyte border
+        const minX = electrolyteBorders.right.x + hydrogenSettings.radius;
+        if (oxygen.x <= minX) {
           oxygen.x = minX;
           oxygen.vx = 0;
         }
@@ -662,7 +689,9 @@
           const dx = Math.abs(oxygen.x - avgX);
           const dy = Math.abs(oxygen.y - avgY);
           
-          if (dx < 40 * scale && dy < 40 * scale) {
+          // Fixed: Scaled collision detection for mobile
+          const collisionDistance = 40 * scale;
+          if (dx < collisionDistance && dy < collisionDistance) {
             for (let i = hydrogen.length - 1; i >= 0; i--) {
               if (hydrogen[i].pairId === oxygen.targetPairId) hydrogen.splice(i, 1);
             }
@@ -679,11 +708,11 @@
         }
       }
 
-      // H2O update
+      // H2O update - Fixed: Proper movement and fading
       for (let i = h2oList.length - 1; i >= 0; i--) {
         const w = h2oList[i];
         w.x += w.vx * globalSpeed;
-        const returnX = columns.rightElectrode.x + columns.rightElectrode.width - 6;
+        const returnX = columns.rightElectrode.x + columns.rightElectrode.width - hydrogenSettings.radius;
         
         if (w.x >= returnX) {
           if (!w.fadeStart) w.fadeStart = now();
