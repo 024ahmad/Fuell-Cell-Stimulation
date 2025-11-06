@@ -2,15 +2,348 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Fuel Cell - Step 1</title>
-  <link rel="stylesheet" href="style.css" />
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+
+    :root {
+      --base-size: 1vw;
+      --scale-factor: 1;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: min(95%, 1800px);
+      text-align: center;
+      background: rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: min(4vw, 40px);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: white;
+      margin-bottom: min(3vw, 30px);
+      font-size: clamp(28px, 4.5vw, 52px);
+      text-shadow: 2px 2px 6px rgba(0,0,0,0.45);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      margin: 0 auto;
+      max-width: 1600px;
+      min-height: 400px;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+      border: 2px solid #34495e;
+      border-radius: 10px;
+      background: #1a1a2e;
+      display: block;
+      margin: 0 auto;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      max-width: 100%;
+    }
+
+    /* Controls under the canvas */
+    .controls {
+      margin-top: min(3vw, 20px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: min(3vw, 20px);
+      flex-wrap: wrap;
+    }
+
+    /* Speed control */
+    .speed-control {
+      color: white;
+      font-size: clamp(14px, 2vw, 18px);
+      display: flex;
+      align-items: center;
+      gap: min(2vw, 12px);
+      background: rgba(255,255,255,0.03);
+      padding: min(2vw, 10px) min(2.5vw, 15px);
+      border-radius: 10px;
+      backdrop-filter: blur(4px);
+      font-weight: 500;
+    }
+
+    input[type="range"] { 
+      width: min(40vw, 250px); 
+    }
+
+    /* Glassy play/pause button */
+    button.glassy {
+      border: none;
+      padding: min(2vw, 12px) min(3vw, 20px);
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: clamp(14px, 2vw, 18px);
+      color: white;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      box-shadow: 0 6px 18px rgba(20,30,60,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+      backdrop-filter: blur(6px);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      white-space: nowrap;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    button.glassy:active { transform: translateY(1px) scale(0.997); }
+    button.glassy:hover {
+      box-shadow: 0 10px 26px rgba(20,30,60,0.55), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    /* small speed-value text */
+    #speedValue { 
+      color: #dfe9ff; 
+      font-weight: 600; 
+      font-size: clamp(14px, 2vw, 18px);
+    }
+
+    /* NEW: Info Section Styling */
+    .info-section {
+      margin-top: min(5vw, 40px);
+      text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: min(4vw, 30px);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .info-section h2 {
+      color: white;
+      font-size: clamp(24px, 4vw, 40px);
+      margin-bottom: min(3vw, 20px);
+      text-align: center;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+    }
+
+    .info-content {
+      color: #f0f0f0;
+      line-height: 1.7;
+      text-align: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      font-weight: 400;
+    }
+
+    .info-content p {
+      margin-bottom: min(3vw, 18px);
+      font-size: clamp(15px, 1.9vw, 19px);
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+      text-align: center;
+      letter-spacing: 0.1px;
+    }
+
+    .info-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Mobile-specific adjustments */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        padding: 20px 15px;
+        border-radius: 12px;
+      }
+      
+      .controls {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .speed-control {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      input[type="range"] {
+        width: min(60vw, 250px);
+      }
+      
+      .info-section {
+        padding: 20px 15px;
+        margin-top: 25px;
+      }
+      
+      h1 {
+        letter-spacing: -0.3px;
+      }
+    }
+
+    /* Small mobile devices */
+    @media (max-width: 480px) {
+      .container {
+        padding: 15px 10px;
+      }
+      
+      h1 {
+        margin-bottom: 15px;
+        font-size: 24px;
+        letter-spacing: -0.2px;
+      }
+      
+      .info-section {
+        padding: 15px 12px;
+        margin-top: 20px;
+      }
+      
+      .info-section h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
+      }
+      
+      .info-content p {
+        font-size: 14px;
+        margin-bottom: 12px;
+        line-height: 1.6;
+      }
+    }
+
+    /* Large screens (1920px and above) */
+    @media (min-width: 1920px) {
+      .container {
+        max-width: 95%;
+        padding: 50px;
+      }
+      
+      .canvas-container {
+        max-width: 1600px;
+        min-height: 600px;
+      }
+      
+      h1 {
+        font-size: 56px;
+        margin-bottom: 40px;
+        letter-spacing: -0.8px;
+      }
+      
+      .info-section h2 {
+        font-size: 44px;
+      }
+      
+      .info-content p {
+        font-size: 22px;
+        line-height: 1.8;
+      }
+      
+      button.glassy {
+        font-size: 22px;
+        padding: 18px 30px;
+      }
+      
+      .speed-control {
+        font-size: 22px;
+      }
+      
+      #speedValue {
+        font-size: 22px;
+      }
+    }
+
+    /* Extra large screens (4K and above) */
+    @media (min-width: 2560px) {
+      .container {
+        max-width: 90%;
+        padding: 60px;
+      }
+      
+      .canvas-container {
+        max-width: 2000px;
+        min-height: 800px;
+      }
+      
+      h1 {
+        font-size: 68px;
+        margin-bottom: 50px;
+        letter-spacing: -1px;
+      }
+      
+      .info-section h2 {
+        font-size: 54px;
+      }
+      
+      .info-content p {
+        font-size: 26px;
+        line-height: 1.9;
+      }
+      
+      button.glassy {
+        font-size: 26px;
+        padding: 22px 36px;
+      }
+      
+      .speed-control {
+        font-size: 26px;
+      }
+      
+      #speedValue {
+        font-size: 26px;
+      }
+    }
+
+    /* Orientation handling */
+    @media (max-height: 600px) and (orientation: landscape) {
+      body {
+        padding: 10px;
+      }
+      
+      .container {
+        padding: 15px;
+      }
+      
+      .canvas-container {
+        max-width: 90vw;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
     <h1>Fuel Cell Structure</h1>
 
-    <canvas id="fuelCellCanvas" width="800" height="500"></canvas>
+    <div class="canvas-container">
+      <canvas id="fuelCellCanvas" width="800" height="500"></canvas>
+    </div>
 
     <!-- Controls: speed slider + play/pause -->
     <div class="controls">
@@ -27,7 +360,7 @@
 
     <!-- NEW: Fuel Cell Information Section -->
     <div class="info-section">
-      <h2>Fuel Cell</h2>
+      <h2>Fuel Cell Technology</h2>
       <div class="info-content">
         <p>A fuel cell is a device that converts chemical energy into electrical energy in a reaction in which hydrogen is oxidized to produce water.</p>
         <p>Fuel cells have less heat loss, making them more energy-efficient than conventional fuel systems.</p>
@@ -39,6 +372,570 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script>
+    // Responsive Canvas Setup
+    const canvas = document.getElementById('fuelCellCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Responsive sizing function
+    function setupCanvas() {
+      const container = canvas.parentElement;
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      const aspectRatio = 800 / 500; // Original aspect ratio
+      
+      // Set canvas dimensions based on container width and height
+      const canvasWidth = Math.min(containerWidth, 2000);
+      const canvasHeight = Math.min(canvasWidth / aspectRatio, containerHeight * 0.8);
+      
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      
+      // Update all dimensions based on new canvas size
+      updateDimensions(canvasWidth, canvasHeight);
+    }
+
+    // Update all dimensions based on canvas size
+    function updateDimensions(width, height) {
+      const scaleX = width / 800;
+      const scaleY = height / 500;
+      const scale = Math.min(scaleX, scaleY);
+      
+      // Update fuel cell dimensions
+      fuelCell.width = 600 * scaleX;
+      fuelCell.height = 300 * scaleY;
+      fuelCell.x = (width - fuelCell.width) / 2;
+      fuelCell.y = (height - fuelCell.height) / 2 + 20 * scaleY;
+
+      // Update columns
+      columns.leftElectrode.x = fuelCell.x + 2;
+      columns.leftElectrode.y = fuelCell.y + 2;
+      columns.leftElectrode.width = 150 * scaleX;
+      columns.leftElectrode.height = fuelCell.height - 4;
+
+      columns.electrolyte.x = fuelCell.x + 152 * scaleX;
+      columns.electrolyte.y = fuelCell.y + 2;
+      columns.electrolyte.width = 296 * scaleX;
+      columns.electrolyte.height = fuelCell.height - 4;
+
+      columns.rightElectrode.x = fuelCell.x + 448 * scaleX;
+      columns.rightElectrode.y = fuelCell.y + 2;
+      columns.rightElectrode.width = 150 * scaleX;
+      columns.rightElectrode.height = fuelCell.height - 4;
+
+      // Update electrolyte borders
+      electrolyteBorders.left.x = columns.electrolyte.x;
+      electrolyteBorders.left.y = columns.electrolyte.y;
+      electrolyteBorders.left.width = 10 * scaleX;
+      electrolyteBorders.left.height = columns.electrolyte.height;
+
+      electrolyteBorders.right.x = columns.electrolyte.x + columns.electrolyte.width - electrolyteBorders.left.width;
+      electrolyteBorders.right.y = columns.electrolyte.y;
+      electrolyteBorders.right.width = electrolyteBorders.left.width;
+      electrolyteBorders.right.height = columns.electrolyte.height;
+
+      // Update hydrogen settings based on scale
+      hydrogenSettings.radius = 12 * scale;
+      hydrogenSettings.pairGapY = 25 * scaleY;
+
+      // Update LED position
+      led.x = fuelCell.x + fuelCell.width / 2;
+      led.y = fuelCell.y - 40 * scaleY;
+      led.width = 40 * scale;
+      led.height = 20 * scale;
+
+      // Update wires
+      wires.left.startX = columns.electrolyte.x;
+      wires.left.startY = fuelCell.y;
+      wires.left.endX = led.x - led.width / 2;
+      wires.left.endY = led.y + led.height / 2;
+
+      wires.right.startX = columns.electrolyte.x + columns.electrolyte.width;
+      wires.right.startY = fuelCell.y;
+      wires.right.endX = led.x + led.width / 2;
+      wires.right.endY = led.y + led.height / 2;
+    }
+
+    const speedSlider = document.getElementById('speedSlider');
+    const speedValue = document.getElementById('speedValue');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+
+    let globalSpeed = 1.0;
+    if (speedSlider) {
+      globalSpeed = parseFloat(speedSlider.value || 1);
+      speedValue.textContent = globalSpeed.toFixed(1) + 'x';
+      speedSlider.addEventListener('input', () => {
+        globalSpeed = parseFloat(speedSlider.value);
+        speedValue.textContent = globalSpeed.toFixed(1) + 'x';
+      });
+    } else {
+      console.warn('Speed slider not found.');
+    }
+
+    // Animation control
+    let running = true;
+    let rafId = null;
+    function setRunning(val) {
+      running = val;
+      if (running) {
+        playPauseBtn.innerHTML = '⏸ Pause';
+        startAnimation();
+      } else {
+        playPauseBtn.innerHTML = '▶ Play';
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+    }
+    if (playPauseBtn) {
+      playPauseBtn.addEventListener('click', () => setRunning(!running));
+    }
+
+    // Fuel Cell geometry - Will be updated in setupCanvas
+    const fuelCell = { x: 100, y: 150, width: 600, height: 300 };
+    const columns = {
+      leftElectrode: { x: fuelCell.x + 2, y: fuelCell.y + 2, width: 150, height: fuelCell.height - 4, color: '#bdc3c7' },
+      electrolyte: { x: fuelCell.x + 152, y: fuelCell.y + 2, width: 296, height: fuelCell.height - 4, color: 'rgba(173,216,230,0.6)' },
+      rightElectrode: { x: fuelCell.x + 448, y: fuelCell.y + 2, width: 150, height: fuelCell.height - 4, color: '#bdc3c7' }
+    };
+    const electrolyteBorders = {
+      left: { x: columns.electrolyte.x, y: columns.electrolyte.y, width: 10, height: columns.electrolyte.height },
+      right: { x: columns.electrolyte.x + columns.electrolyte.width - 10, y: columns.electrolyte.y, width: 10, height: columns.electrolyte.height }
+    };
+
+    // decorative particles
+    const particles = { minus: [], plus: [] };
+
+    // Hydrogen system (H and H+)
+    const hydrogen = [];
+    const hydrogenSettings = {
+      gapMs: 3000,
+      pairGapY: 25,
+      radius: 12,
+      baseSpeed: 1.2,
+      pairHorizontalMultiplier: 1.5
+    };
+    let lastPairTime = 0;
+    let nextPairId = 1;
+
+    // Pair queue & allowed pair
+    const pairQueue = [];
+    let allowedPairId = null;
+
+    // Oxygen / Reaction / H2O
+    let oxygen = null;
+    const oxygenBaseSpeed = 0.7;
+    let reactionInProgress = false;
+
+    // H2O list
+    const h2oList = [];
+
+    // helpers
+    const now = () => performance.now();
+
+    // create entities
+    function createEntities() {
+      const scale = Math.min(canvas.width / 800, canvas.height / 500);
+      
+      // decorative
+      if (Math.random() < 0.02) particles.minus.push({ 
+        x: columns.electrolyte.x, 
+        y: columns.electrolyte.y + columns.electrolyte.height, 
+        progress: 0, 
+        speed: 0.001 + Math.random() * 0.01 
+      });
+      if (Math.random() < 0.02) particles.plus.push({ 
+        x: columns.electrolyte.x + columns.electrolyte.width, 
+        y: columns.electrolyte.y, 
+        progress: 0, 
+        speed: 0.001 + Math.random() * 0.01 
+      });
+
+      // spawn hydrogen pair
+      const t = now();
+      if (t - lastPairTime >= hydrogenSettings.gapMs && pairQueue.length === 0) {
+        lastPairTime = t;
+        const startX = columns.leftElectrode.x + 6;
+        const baseY = columns.leftElectrode.y + columns.leftElectrode.height / 2;
+        const pairId = nextPairId++;
+        
+        pairQueue.push(pairId);
+        allowedPairId = pairId;
+
+        hydrogen.push({ 
+          x: startX, 
+          y: baseY - hydrogenSettings.pairGapY, 
+          vx: hydrogenSettings.baseSpeed * scale, 
+          ionized: false, 
+          stopped: false, 
+          label: 'H', 
+          pairId 
+        });
+        hydrogen.push({ 
+          x: startX, 
+          y: baseY + hydrogenSettings.pairGapY, 
+          vx: hydrogenSettings.baseSpeed * scale, 
+          ionized: false, 
+          stopped: false, 
+          label: 'H', 
+          pairId 
+        });
+      }
+
+      // oxygen spawn
+      if (!oxygen && !reactionInProgress && allowedPairId !== null) {
+        const ionizedCount = hydrogen.reduce((c, h) => (h.pairId === allowedPairId && h.ionized) ? c + 1 : c, 0);
+        if (ionizedCount >= 2) {
+          oxygen = {
+            x: columns.rightElectrode.x + columns.rightElectrode.width - 8,
+            y: columns.rightElectrode.y + columns.rightElectrode.height / 2,
+            vx: -oxygenBaseSpeed * scale,
+            active: true,
+            targetPairId: allowedPairId
+          };
+        }
+      }
+    }
+
+    // update entities
+    function updateEntities() {
+      const scale = Math.min(canvas.width / 800, canvas.height / 500);
+      
+      // decorative particles
+      for (let i = particles.minus.length - 1; i >= 0; i--) {
+        const p = particles.minus[i];
+        p.progress += p.speed * globalSpeed * 0.8;
+        if (p.progress >= 1) { particles.minus.splice(i, 1); continue; }
+        p.y = columns.electrolyte.y + columns.electrolyte.height - (p.progress) * columns.electrolyte.height;
+      }
+      for (let i = particles.plus.length - 1; i >= 0; i--) {
+        const p = particles.plus[i];
+        p.progress += p.speed * globalSpeed * 0.8;
+        if (p.progress >= 1) { particles.plus.splice(i, 1); continue; }
+        p.y = columns.electrolyte.y + (p.progress) * columns.electrolyte.height;
+      }
+
+      const ionizeX = electrolyteBorders.left.x + electrolyteBorders.left.width;
+      const stopX = electrolyteBorders.right.x - 6;
+
+      // hydrogen update
+      for (let i = hydrogen.length - 1; i >= 0; i--) {
+        const p = hydrogen[i];
+        
+        if (p.pairId === allowedPairId) {
+          if (!p.ionized) {
+            p.x += p.vx * globalSpeed * hydrogenSettings.pairHorizontalMultiplier;
+            
+            if ((p.x + hydrogenSettings.radius) >= ionizeX) {
+              p.ionized = true;
+              p.label = 'H+';
+              p.vx = hydrogenSettings.baseSpeed * 1.2 * scale;
+            }
+          } else {
+            p.x += p.vx * globalSpeed;
+            
+            if (p.x >= stopX - hydrogenSettings.radius) {
+              p.x = stopX - hydrogenSettings.radius;
+              p.stopped = true;
+              p.vx = 0;
+            }
+          }
+        }
+
+        if (p.x > canvas.width + 80) hydrogen.splice(i, 1);
+      }
+
+      // Oxygen update
+      if (oxygen && oxygen.active) {
+        oxygen.x += oxygen.vx * globalSpeed;
+        
+        const minX = electrolyteBorders.right.x + 10;
+        if (oxygen.x < minX) {
+          oxygen.x = minX;
+          oxygen.vx = 0;
+        }
+
+        const members = hydrogen.filter(h => h.pairId === oxygen.targetPairId && h.ionized && h.stopped);
+        
+        if (members.length >= 2) {
+          const avgX = (members[0].x + members[1].x) / 2;
+          const avgY = (members[0].y + members[1].y) / 2;
+          const dx = Math.abs(oxygen.x - avgX);
+          const dy = Math.abs(oxygen.y - avgY);
+          
+          if (dx < 40 * scale && dy < 40 * scale) {
+            for (let i = hydrogen.length - 1; i >= 0; i--) {
+              if (hydrogen[i].pairId === oxygen.targetPairId) hydrogen.splice(i, 1);
+            }
+            
+            const h2o = { x: avgX, y: avgY, vx: 2.0 * scale, alpha: 1, fadeStart: null };
+            h2oList.push(h2o);
+
+            oxygen = null;
+            reactionInProgress = true;
+            
+            pairQueue.length = 0;
+            allowedPairId = null;
+          }
+        }
+      }
+
+      // H2O update
+      for (let i = h2oList.length - 1; i >= 0; i--) {
+        const w = h2oList[i];
+        w.x += w.vx * globalSpeed;
+        const returnX = columns.rightElectrode.x + columns.rightElectrode.width - 6;
+        
+        if (w.x >= returnX) {
+          if (!w.fadeStart) w.fadeStart = now();
+          const elapsed = now() - w.fadeStart;
+          w.alpha = Math.max(0, 1 - elapsed / 400);
+          
+          if (w.alpha <= 0.02) {
+            h2oList.splice(i, 1);
+            reactionInProgress = false;
+          }
+        }
+      }
+    }
+
+    // drawing functions
+    function drawEntities() {
+      ctx.fillStyle = '#1a1a2e';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawLEDAndWires();
+
+      // left electrode
+      ctx.fillStyle = columns.leftElectrode.color;
+      ctx.fillRect(columns.leftElectrode.x, columns.leftElectrode.y, columns.leftElectrode.width, columns.leftElectrode.height);
+
+      // electrolyte
+      ctx.fillStyle = columns.electrolyte.color;
+      ctx.fillRect(columns.electrolyte.x, columns.electrolyte.y, columns.electrolyte.width, columns.electrolyte.height);
+
+      // electrolyte borders
+      ctx.fillStyle = '#1a5276';
+      ctx.fillRect(electrolyteBorders.left.x, electrolyteBorders.left.y, electrolyteBorders.left.width, electrolyteBorders.left.height);
+      ctx.fillRect(electrolyteBorders.right.x, electrolyteBorders.right.y, electrolyteBorders.right.width, electrolyteBorders.right.height);
+
+      // right electrode
+      ctx.fillStyle = columns.rightElectrode.color;
+      ctx.fillRect(columns.rightElectrode.x, columns.rightElectrode.y, columns.rightElectrode.width, columns.rightElectrode.height);
+
+      // decorative particles
+      const scale = Math.min(canvas.width / 800, canvas.height / 500);
+      particles.minus.forEach(p => {
+        ctx.fillStyle = 'rgba(255,255,255,0.9)'; 
+        ctx.beginPath(); 
+        ctx.arc(p.x, p.y, 10 * scale, 0, Math.PI*2); 
+        ctx.fill();
+        ctx.fillStyle = '#3498db'; 
+        ctx.font = `bold ${20 * scale}px Inter`; 
+        ctx.textAlign = 'center'; 
+        ctx.textBaseline = 'middle'; 
+        ctx.fillText('-', p.x, p.y);
+      });
+      particles.plus.forEach(p => {
+        ctx.fillStyle = 'rgba(255,255,255,0.9)'; 
+        ctx.beginPath(); 
+        ctx.arc(p.x, p.y, 10 * scale, 0, Math.PI*2); 
+        ctx.fill();
+        ctx.fillStyle = '#e74c3c'; 
+        ctx.font = `bold ${14 * scale}px Inter`; 
+        ctx.textAlign = 'center'; 
+        ctx.textBaseline = 'middle'; 
+        ctx.fillText('+', p.x, p.y);
+      });
+
+      // hydrogen & ions
+      hydrogen.forEach(p => {
+        if (!p.ionized) {
+          ctx.fillStyle = 'rgba(230,230,255,0.95)'; 
+          ctx.beginPath(); 
+          ctx.arc(p.x, p.y, hydrogenSettings.radius, 0, Math.PI*2); 
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(120,120,200,0.9)'; 
+          ctx.lineWidth = 2; 
+          ctx.stroke();
+          ctx.fillStyle = '#2c3e50'; 
+          ctx.font = `bold ${14 * scale}px Inter`; 
+          ctx.textAlign = 'center'; 
+          ctx.textBaseline = 'middle'; 
+          ctx.fillText('H', p.x, p.y);
+        } else {
+          ctx.fillStyle = 'rgba(255,245,235,0.95)'; 
+          ctx.beginPath(); 
+          ctx.arc(p.x, p.y, hydrogenSettings.radius, 0, Math.PI*2); 
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(220,90,80,0.95)'; 
+          ctx.lineWidth = 2.5; 
+          ctx.stroke();
+          ctx.fillStyle = '#c0392b'; 
+          ctx.font = `bold ${12 * scale}px Inter`; 
+          ctx.textAlign = 'center'; 
+          ctx.textBaseline = 'middle'; 
+          ctx.fillText('H+', p.x, p.y);
+        }
+      });
+
+      // oxygen
+      if (oxygen) {
+        ctx.fillStyle = 'rgba(200,230,255,0.95)'; 
+        ctx.beginPath(); 
+        ctx.arc(oxygen.x, oxygen.y, 14 * scale, 0, Math.PI*2); 
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(90,140,180,0.95)'; 
+        ctx.lineWidth = 2; 
+        ctx.stroke();
+        ctx.fillStyle = '#0a3b5a'; 
+        ctx.font = `bold ${14 * scale}px Inter`; 
+        ctx.textAlign = 'center'; 
+        ctx.textBaseline = 'middle'; 
+        ctx.fillText('O', oxygen.x, oxygen.y);
+      }
+
+      // H2O
+      h2oList.forEach(w => {
+        ctx.save(); 
+        ctx.globalAlpha = w.alpha;
+        ctx.fillStyle = 'rgba(100,160,255,0.95)'; 
+        ctx.beginPath(); 
+        ctx.arc(w.x, w.y, 16 * scale, 0, Math.PI*2); 
+        ctx.fill();
+        ctx.fillStyle = 'white'; 
+        ctx.font = `bold ${12 * scale}px Inter`; 
+        ctx.textAlign = 'center'; 
+        ctx.textBaseline = 'middle'; 
+        ctx.fillText('H₂O', w.x, w.y);
+        ctx.restore();
+      });
+
+      drawBordersAndLabels();
+    }
+
+    // LED/wires and borders functions
+    const led = { x: fuelCell.x + fuelCell.width/2, y: 60, width: 40, height: 20, isOn: true };
+    const wires = {
+      left: { startX: columns.electrolyte.x, startY: fuelCell.y, endX: led.x - led.width/2, endY: led.y + led.height/2, color: '#f1c40f', width: 3 },
+      right: { startX: columns.electrolyte.x + columns.electrolyte.width, startY: fuelCell.y, endX: led.x + led.width/2, endY: led.y + led.height/2, color: '#f1c40f', width: 3 }
+    };
+    
+    function drawLEDAndWires() {
+      const scale = Math.min(canvas.width / 800, canvas.height / 500);
+      
+      ctx.strokeStyle = wires.left.color; 
+      ctx.lineWidth = wires.left.width * scale; 
+      ctx.beginPath();
+      ctx.moveTo(wires.left.startX, wires.left.startY); 
+      ctx.lineTo(wires.left.startX, wires.left.startY - 30 * scale); 
+      ctx.lineTo(wires.left.endX, wires.left.startY - 30 * scale); 
+      ctx.lineTo(wires.left.endX, wires.left.endY); 
+      ctx.stroke();
+      
+      ctx.strokeStyle = wires.right.color; 
+      ctx.lineWidth = wires.right.width * scale; 
+      ctx.beginPath();
+      ctx.moveTo(wires.right.startX, wires.right.startY); 
+      ctx.lineTo(wires.right.startX, wires.right.startY - 30 * scale); 
+      ctx.lineTo(wires.right.endX, wires.right.startY - 30 * scale); 
+      ctx.lineTo(wires.right.endX, wires.right.endY); 
+      ctx.stroke();
+
+      ctx.fillStyle = led.isOn ? '#ff4757' : '#95a5a6'; 
+      ctx.fillRect(led.x - led.width/2, led.y, led.width, led.height);
+      if (led.isOn) { 
+        ctx.shadowColor = '#ff4757'; 
+        ctx.shadowBlur = 15; 
+        ctx.fillRect(led.x - led.width/2, led.y, led.width, led.height); 
+        ctx.shadowBlur = 0; 
+      }
+      ctx.strokeStyle = '#2c3e50'; 
+      ctx.lineWidth = 2 * scale; 
+      ctx.strokeRect(led.x - led.width/2, led.y, led.width, led.height);
+      ctx.fillStyle = 'white'; 
+      ctx.font = `${12 * scale}px Inter`; 
+      ctx.textAlign = 'center'; 
+      ctx.fillText('LED', led.x, led.y - 10 * scale);
+      ctx.fillStyle = 'white'; 
+      ctx.font = `${10 * scale}px Inter`; 
+      ctx.fillText('-', led.x - led.width/4, led.y + led.height/2 + 3 * scale); 
+      ctx.fillText('+', led.x + led.width/4, led.y + led.height/2 + 3 * scale);
+    }
+
+    function drawBordersAndLabels() {
+      const scale = Math.min(canvas.width / 800, canvas.height / 500);
+      
+      ctx.strokeStyle = '#3498db'; 
+      ctx.lineWidth = 4 * scale; 
+      ctx.beginPath();
+      ctx.moveTo(fuelCell.x, fuelCell.y); 
+      ctx.lineTo(fuelCell.x + fuelCell.width, fuelCell.y); 
+      ctx.stroke();
+      ctx.beginPath(); 
+      ctx.moveTo(fuelCell.x, fuelCell.y + fuelCell.height); 
+      ctx.lineTo(fuelCell.x + fuelCell.width, fuelCell.y + fuelCell.height); 
+      ctx.stroke();
+
+      const gapSize = 120 * scale;
+      ctx.beginPath(); 
+      ctx.moveTo(fuelCell.x, fuelCell.y); 
+      ctx.lineTo(fuelCell.x, fuelCell.y + (fuelCell.height - gapSize) / 2); 
+      ctx.stroke();
+      ctx.beginPath(); 
+      ctx.moveTo(fuelCell.x, fuelCell.y + (fuelCell.height - gapSize) / 2 + gapSize); 
+      ctx.lineTo(fuelCell.x, fuelCell.y + fuelCell.height); 
+      ctx.stroke();
+      ctx.beginPath(); 
+      ctx.moveTo(fuelCell.x + fuelCell.width, fuelCell.y); 
+      ctx.lineTo(fuelCell.x + fuelCell.width, fuelCell.y + (fuelCell.height - gapSize) / 2); 
+      ctx.stroke();
+      ctx.beginPath(); 
+      ctx.moveTo(fuelCell.x + fuelCell.width, fuelCell.y + (fuelCell.height - gapSize) / 2 + gapSize); 
+      ctx.lineTo(fuelCell.x + fuelCell.width, fuelCell.y + fuelCell.height); 
+      ctx.stroke();
+
+      ctx.fillStyle = 'white'; 
+      ctx.font = `bold ${16 * scale}px Inter`; 
+      ctx.textAlign = 'center';
+      ctx.fillText('ELECTROLYTE', columns.electrolyte.x + columns.electrolyte.width/2, columns.electrolyte.y + columns.electrolyte.height/2);
+      ctx.font = `bold ${14 * scale}px Inter`; 
+      ctx.fillStyle = '#e74c3c';
+      ctx.fillText('ANODE', columns.leftElectrode.x + columns.leftElectrode.width/2, columns.leftElectrode.y - 20 * scale);
+      ctx.fillStyle = '#3498db'; 
+      ctx.fillText('CATHODE', columns.rightElectrode.x + columns.rightElectrode.width/2, columns.rightElectrode.y - 20 * scale);
+    }
+
+    // main loop
+    let blinkCounter = 0;
+    function animate() {
+      if (!running) return;
+      blinkCounter++;
+      if (blinkCounter % 60 === 0) led.isOn = !led.isOn;
+      createEntities();
+      updateEntities();
+      drawEntities();
+      rafId = requestAnimationFrame(animate);
+    }
+
+    // Initialize and handle resize
+    function init() {
+      setupCanvas();
+      lastPairTime = now() - hydrogenSettings.gapMs * 0.9;
+      setRunning(true);
+      
+      // Handle window resize
+      window.addEventListener('resize', () => {
+        setupCanvas();
+        drawEntities();
+      });
+    }
+
+    function startAnimation() { 
+      if (!rafId) rafId = requestAnimationFrame(animate); 
+    }
+
+    // Start the application
+    init();
+  </script>
 </body>
 </html>
