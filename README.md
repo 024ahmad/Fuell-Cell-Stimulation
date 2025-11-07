@@ -1,4 +1,4 @@
-Fuel cell
+*Fuel cell*
 
 A fuel cell is a device that converts chemical energy into electrical energy in a reaction in which hydrogen is oxidized to produce water.
 Fuel cells have less heat loss, making them more energy-efficient than conventional fuel systems.
